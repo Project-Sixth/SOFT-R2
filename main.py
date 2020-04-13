@@ -10,7 +10,8 @@ parser.add_argument('certname', help="Certbot certificate name (--cert-name) to 
 parser.add_argument('webroot', help="Webroot path, must be filled in manually (since there can be multiple ways to target acme-challenge folder)")
 parser.add_argument('nginxconfpath', help="Path to nginx config. This script will automatically find all domains.")
 parser.add_argument('-p', help="If there is servers that listen to other ports rather than 443, just skip any other ports and jump straight to 443 domains. It is a bad practice tho.", action="store_true")
-parser.add_argument('-d', '--dry-run', help="With this flag, no action will be sent - script only will show command it is about to execute.", action="store_true")
+parser.add_argument('-d', '--dry-run', help="With this flag, a certbot dry-run will be initiated instead of real cert change.", action="store_true")
+parser.add_argument('-s', '--script-dry-run', help="With this flag, no action will be sent - script only will show command it is about to execute.", action="store_true")
 args = parser.parse_args()
 
 # Thank you stackoverflow!
@@ -152,10 +153,14 @@ def prepareDomains(serverNode):
     return q
 
 def executeCertbot(domains):
-    if args.dry_run:
-        print(f"certbot certonly --cert-name {args.certname} --webroot -w {args.webroot} -d {domains}")
+    dryrun = '--dry-run ' if args.dry_run else ''
+    command = f'certbot certonly {dryrun}--cert-name {args.certname} --webroot -w {args.webroot} -d {domains}'
+    if args.script_dry_run:
+        print('Script will dry-run without executing command!')
+        print(command)
     else:
-        os.system(f"certbot certonly --cert-name {args.certname} --webroot -w {args.webroot} -d {domains}")
+        print('Script will run in battlemode.')
+        os.system(command)
 
 try:
     with open(args.nginxconfpath, 'r', encoding='utf-8') as f:
