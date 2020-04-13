@@ -138,6 +138,7 @@ def loads(string):
     return current_block
 
 # My program
+# TODO: Добавить автоматический nginx -t для тестирования конфига перед тем как его парсить.
 def getListeningPorts(serverNode):
     ports = list(serverNode.query("listen"))
     answer = []
@@ -156,17 +157,21 @@ def executeCertbot(domains):
     dryrun = '--dry-run ' if args.dry_run else ''
     command = f'certbot certonly {dryrun}--cert-name {args.certname} --webroot -w {args.webroot} -d {domains}'
     if not args.commit:
-        print('Script will dry-run without executing command!')
+        print('NOTICE: Script will dry-run without executing command to bash!')
+        if args.dry_run:
+            print("LOG: And certbot will run dry.")
         print(command)
     else:
-        print('Script will run in battlemode.')
+        print('LOG: Script will run in battlemode.')
+        if args.dry_run:
+            print("NOTICE: But certbot will run dry.")
         os.system(command)
 
 try:
     with open(args.nginxconfpath, 'r', encoding='utf-8') as f:
         config_file = f.read()
 except Exception as E:
-    print(f'File not found. Error {E}.')
+    print(f'ERROR: File not found. Error {E}.')
     exit(1)
 
 nginx_config = loads(config_file)
@@ -175,41 +180,41 @@ if len(servers_in_config) == 0:
     print("ERROR: No servers found in config. Prehaps, you loaded wrong file?")
     exit(1)
 elif len(servers_in_config) == 1:
-    print("Found only one server section in config. Lets see about ports inside. Expecting 443 or double-ported 80/443.")
+    print("LOG: Found only one server section in config. Lets see about ports inside. Expecting 443 or double-ported 80/443.")
     listenports = getListeningPorts(servers_in_config[0])
     if len(listenports) == 0:
-        print("No listen ports found. Emergency shutdown! Check your configuration file!")
+        print("ERROR: No listen ports found. Emergency shutdown! Check your configuration file!")
         exit(1)
     else:
-        print(f"Found {len(listenports)} available ports. Searching for 443th.")
+        print(f"LOG: Found {len(listenports)} available ports. Searching for 443th.")
         if '443' not in listenports:
             print("ERROR: 443 port not found in server config! Shutting down!")
             exit(1)
         else:
-            print("443th port confirmed. Gathering domains and executing certbot.")
+            print("LOG: 443th port confirmed. Gathering domains and executing certbot.")
             domains_on_server = prepareDomains(servers_in_config[0])
             executeCertbot(domains_on_server)  
 elif len(servers_in_config) == 2:
-    print("Good. Found two server sections. Presumably, 80 and 443 ports. Althrough we must check.")
+    print("LOG: Good. Found two server sections. Presumably, 80 and 443 ports. Althrough we must check.")
     listenport1 = getListeningPorts(servers_in_config[0])
     listenport2 = getListeningPorts(servers_in_config[1])
     if '443' in listenport1:
-        print("First section have 443th port. Thats good.")
+        print("LOG: First section have 443th port. Thats good.")
         secureDomains, nonsecureDomains = prepareDomains(servers_in_config[0]), prepareDomains(servers_in_config[1])
         if secureDomains != nonsecureDomains and not args.p:
             print("ERROR: server_name directives have different strings for both servers! Exiting now...")
             exit(1)
         else:
-            print("Both server parts have same server_name directives or -p flag was sent. Executing certbot on domains found in 443 port!")
+            print("LOG: Both server parts have same server_name directives or -p flag was sent. Executing certbot on domains found in 443 port!")
             executeCertbot(secureDomains)
     elif '443' in listenport2:
-        print("Second section have 443th port. Thats good.")
+        print("LOG: Second section have 443th port. Thats good.")
         secureDomains, nonsecureDomains = prepareDomains(servers_in_config[1]), prepareDomains(servers_in_config[0])
         if secureDomains != nonsecureDomains and not args.p:
             print("ERROR: server_name directives have different strings for both servers! Exiting now...")
             exit(1)
         else:
-            print("Both server parts have same server_name directives or -p flag was sent. Executing certbot on domains found in 443 port!")
+            print("LOG: Both server parts have same server_name directives or -p flag was sent. Executing certbot on domains found in 443 port!")
             executeCertbot(secureDomains)
     else:
         print("ERROR: No section have 443th port! Shutting down!")
