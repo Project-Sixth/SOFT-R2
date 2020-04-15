@@ -6,11 +6,11 @@ import os
 # Parser
 
 parser = argparse.ArgumentParser()
-parser.add_argument('certname', help="Certbot certificate name (--cert-name) to update, can be found from command certbot certificates")
+parser.add_argument('certname', help="Certbot certificate name (--cert-name) to update, can be found from command 'certbot certificates'")
 parser.add_argument('webroot', help="Webroot path, must be filled in manually (since there can be multiple ways to target acme-challenge folder)")
-parser.add_argument('nginxconfpath', help="Path to nginx config. This script will automatically find all domains.")
-parser.add_argument('-p', help="If there is servers that listen to other ports rather than 443, just skip any other ports and jump straight to 443 domains. It is a bad practice tho.", action="store_true")
-parser.add_argument('-с', '--commit', help="Without this flag, a certbot dry-run will be initiated instead of real cert change.", action="store_true")
+parser.add_argument('nginxconfpath', help="Path to nginx config. This script will automatically find all domains inside given config.")
+parser.add_argument('-p', help="If there is multiple servers that listen to other ports rather than 443, just skip any other ports and jump straight to 443 domains. It is a bad practice tho.", action="store_true")
+parser.add_argument('-c', '--commit', help="Without this flag, a certbot dry-run will be initiated instead of real cert change.", action="store_true")
 parser.add_argument('-d', '--dry-run', help="With this flag, no action will be sent - script only will show command it is about to execute.", action="store_true")
 args = parser.parse_args()
 
