@@ -168,9 +168,12 @@ def prepareDomains(serverNode):
 
 def executeCertbot(domains):
     # Check for amount of domains. It must not be greater than 100.
-    if len(domains.split(',')) > 100:
+    amount_of_domains = len(domains.split(','))
+    if amount_of_domains > 100:
         print('CRITICAL ERROR! One nginx website have more than 100 domains! Certbot cannot handle more than 100 domains! Shutting down!')
         exit(1)
+    else:
+        print(f'LOG: We have {amount_of_domains} domains to be used in script!')
     
     dryrun = '--dry-run ' if args.dry_run else ''
     command = f'certbot certonly {dryrun}--cert-name {args.certname} --webroot -w {args.webroot} -d {domains}'
