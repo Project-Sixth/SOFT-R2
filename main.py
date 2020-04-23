@@ -92,9 +92,22 @@ def loads(string):
     current_block = Node(root=True)
     current_statement = []
     current_word = ''
+    is_comment = False
 
     for char in string:
-        if char == '{':
+        if is_comment:
+            if char == '\n':
+                """End the comment."""
+                is_comment = False
+            continue
+        
+        if char == "#":
+            """Comment? Ignore everything after it to the end of line \\n."""
+            if len(current_word) > 0:
+                    current_statement.append(current_word)
+                    current_word = ''
+            is_comment = True
+        elif char == '{':
             """Put the current block on the stack, start a new block.
             Also, if we are in a word, "finish" that off, and end the current
             statement."""
